@@ -1,2 +1,11 @@
 
 network_access.py
+.DS_Store
+.idea/LinkTopology.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/workspace.xml
+testdoc/.~lock.Link Information.xlsx#
+testdoc/City_backup.xlsx
+testdoc/test.xlsx
