@@ -1,8 +1,6 @@
 # coding = UTF-8
-import pandas as pd
 import openpyxl as xl
 import copy
-#import treelib
 
 
 def get_sites_dict():
@@ -69,31 +67,32 @@ def generate_topology():
     ws_link = wb_link['Link']
     row_count = ws_link.max_row
     link_graph = {}
+    # extract information from link information table
     for index in range(2, row_count+1):
         link_node = LinkNode()
         link_node.site_1_id = str(ws_link.cell(row = index, column = 3).value)
         link_node.site_2_id = str(ws_link.cell(row = index, column = 4).value)
         link_node.link_distance = ws_link.cell(row = index, column = 11).value
-        link_node.frequency_band = ws_link.cell(row = index, column = 12).value
-        protection = ws_link.cell(row = index, column = 13).value
-        if ws_link.cell(row = index, column = 14).value == "Yes":
+        link_node.frequency_band = ws_link.cell(row = index, column = 13).value
+        protection = ws_link.cell(row = index, column = 33).value
+        if ws_link.cell(row = index, column = 34).value == "Yes":
             protection = protection + "XPIC"
         link_node.protection = protection
-        link_node.planned_capacity = ws_link.cell(row = index, column = 15).value
-        link_node.antenna_diameter = ws_link.cell(row = index, column = 16).value
-        link_node.site_1_antenna_height = ws_link.cell(row = index, column = 17).value
-        link_node.site_2_antenna_height = ws_link.cell(row = index, column = 18).value
-        link_node.link_availability = ws_link.cell(row = index, column = 19).value
+        link_node.planned_capacity = ws_link.cell(row = index, column = 35).value
+        link_node.antenna_diameter = ws_link.cell(row = index, column = 68).value
+        link_node.site_1_antenna_height = ws_link.cell(row = index, column = 78).value
+        link_node.site_2_antenna_height = ws_link.cell(row = index, column = 79).value
+        link_node.link_availability = ws_link.cell(row = index, column = 141).value
         if link_node.site_1_id not in link_graph:
             link_graph[link_node.site_1_id] = [link_node]
         else:
             link_graph[link_node.site_1_id].append(link_node)
-        link_node_1 = copy.deepcopy(link_node)
-        link_node_1.swap_site_id()
-        if link_node_1.site_1_id not in link_graph:
-            link_graph[link_node_1.site_1_id] = [link_node_1]
+        link_node_swap = copy.deepcopy(link_node)
+        link_node_swap.swap_site_id()
+        if link_node_swap.site_1_id not in link_graph:
+            link_graph[link_node_swap.site_1_id] = [link_node_swap]
         else:
-            link_graph[link_node_1.site_1_id].append(link_node_1)
+            link_graph[link_node_swap.site_1_id].append(link_node_swap)
     return link_graph
 
 def generate_link_information():
