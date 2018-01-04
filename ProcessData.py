@@ -1,19 +1,19 @@
 # coding = UTF-8
 import pandas as pd
 import openpyxl as xl
+import copy
 #import treelib
 
 
 def get_sites_dict():
     wb = xl.load_workbook("testdoc/Site Information.xlsx")
     ws = wb["Site Capacity(Hybrid&Packet)"]
-    df_site = pd.DataFrame(ws.values)
 
-    row_count = df_site.shape[0]
+    row_count = ws.max_row
     sites_dict = {}
-    for index in range(1, row_count):
-        site_id = df_site.iloc[index, 0]
-        belong_to = df_site.iloc[index, 10] 
+    for index in range(2, row_count+1):
+        site_id = ws.cell(row = index, column = 1).value
+        belong_to = ws.cell(row = index, column = 11).value
         sites_dict[site_id] = belong_to
     return sites_dict
 
@@ -67,52 +67,51 @@ class LinkNode():
 def generate_topology():
     wb_link = xl.load_workbook("testdoc/Link Information.xlsx")
     ws_link = wb_link['Link']
-    df_link = pd.DataFrame(ws_link.values)
-    row_count = df_link.shape[0]
+    row_count = ws_link.max_row
     link_graph = {}
-    for index in range(1, row_count):
+    for index in range(2, row_count+1):
         link_node = LinkNode()
-        link_node.site_1_id = df_link.iloc[index, 2]
-        link_node.site_2_id = df_link.iloc[index, 3]
-        link_node.link_distance = df_link.iloc[index, 10]
-        link_node.frequency_band = df_link.iloc[index, 11]
-        protection = df_link.iloc[index, 12]
-        if df_link.iloc[index, 13] == "Yes":
+        link_node.site_1_id = ws_link.cell(row = index, column = 3).value
+        link_node.site_2_id = ws_link.cell(row = index, column = 4).value
+        link_node.link_distance = ws_link.cell(row = index, column = 11).value
+        link_node.frequency_band = ws_link.cell(row = index, column = 12).value
+        protection = ws_link.cell(row = index, column = 13).value
+        if ws_link.cell(row = index, column = 14).value == "Yes":
             protection = protection + "XPIC"
         link_node.protection = protection
-        link_node.planned_capacity = df_link.iloc[index, 14]
-        link_node.antenna_diameter = df_link.iloc[index, 15]
-        link_node.site_1_antenna_height = df_link.iloc[index, 16]
-        link_node.site_2_antenna_height = df_link.iloc[index, 17]
-        link_node.link_availability = df_link.iloc[index, 18] 
+        link_node.planned_capacity = ws_link.cell(row = index, column = 15).value
+        link_node.antenna_diameter = ws_link.cell(row = index, column = 16).value
+        link_node.site_1_antenna_height = ws_link.cell(row = index, column = 17).value
+        link_node.site_2_antenna_height = ws_link.cell(row = index, column = 18).value
+        link_node.link_availability = ws_link.cell(row = index, column = 19).value
         if link_node.site_1_id not in link_graph:
             link_graph[link_node.site_1_id] = [link_node]
         else:
             link_graph[link_node.site_1_id].append(link_node)
-        link_node.swap_site_id()
-        if link_node.site_1_id not in link_graph:
-            link_graph[link_node.site_1_id] = [link_node]
+        link_node_1 = copy.deepcopy(link_node)
+        link_node_1.swap_site_id()
+        if link_node_1.site_1_id not in link_graph:
+            link_graph[link_node_1.site_1_id] = [link_node_1]
         else:
-            link_graph[link_node.site_1_id].append(link_node)
+            link_graph[link_node_1.site_1_id].append(link_node_1)
     return link_graph
 
 def generate_link_information():
     wb = xl.load_workbook("testdoc/City.xlsx")
     ws = wb["Technical Info"]
-    df_cust = pd.DataFrame(ws.values)
-    row_count = df_cust.shape[0]
+    row_count = ws.max_row
     sites_dict = get_sites_dict()
     link_graph = generate_topology()
-    for index in range(3, row_count):
-        site_type = df_cust.iloc[index, 0]
-        site_id = df_cust.iloc[index, 1]
+    for index in range(4, row_count+1):
+        site_type = ws.cell(row = index, column = 1).value
+        site_id = ws.cell(row = index, column = 2).value
         if site_type == "SRAN" and site_id in sites_dict:
-            fill_one_row(ws, df_cust, index, sites_dict[site_id], link_graph)
+            fill_one_row(ws, index, sites_dict[site_id], link_graph)
     wb.save('testdoc/test.xlsx')
 
 
-def fill_one_row(ws, df, index, belong_to, link_graph):
-    site_id = df.iloc[index, 1]
+def fill_one_row(ws, index, belong_to, link_graph):
+    site_id = ws.cell(row = index, column = 2).value
     path = find_path_with_connection(link_graph, site_id, belong_to)
     if path == None or len(path)<2:
         return
@@ -120,32 +119,18 @@ def fill_one_row(ws, df, index, belong_to, link_graph):
     link_node = find_node_with_name(link_graph, site_id, path[1])
     if link_node == None:
         return
-    """
-    df.iloc[index, 15] = belong_to
-    df.iloc[index, 17] = link_node.site_2_id
-    df.iloc[index, 18] =  link_node.site_1_id
-    df.iloc[index, 16] = "_".join([link_node.site_2_id, link_node.site_1_id])
-    df.iloc[index, 19] = link_node.link_distance
-    df.iloc[index, 20] = link_node.frequency_band
-    df.iloc[index, 21] = link_node.protection
-    df.iloc[index, 22] = link_node.planned_capacity
-    df.iloc[index, 23] = link_node.antenna_diameter
-    df.iloc[index, 24] = link_node.site_2_antenna_height
-    df.iloc[index, 25] = link_node.site_1_antenna_height
-    df.iloc[index, 28] = link_node.link_availability
-    """
-    ws.cell(row = index+1, column = 16).value = belong_to
-    ws.cell(row = index+1, column = 18).value = link_node.site_2_id
-    ws.cell(row = index+1, column = 19).value =  link_node.site_1_id
-    ws.cell(row = index+1, column = 17).value = "_".join([link_node.site_2_id, link_node.site_1_id])
-    ws.cell(row = index+1, column = 20).value = link_node.link_distance
-    ws.cell(row = index+1, column = 21).value = link_node.frequency_band
-    ws.cell(row = index+1, column = 22).value = link_node.protection
-    ws.cell(row = index+1, column = 23).value = link_node.planned_capacity
-    ws.cell(row = index+1, column = 24).value = link_node.antenna_diameter
-    ws.cell(row = index+1, column = 25).value = link_node.site_2_antenna_height
-    ws.cell(row = index+1, column = 26).value = link_node.site_1_antenna_height
-    ws.cell(row = index+1, column = 29).value = link_node.link_availability
+    ws.cell(row = index, column = 16).value = belong_to
+    ws.cell(row = index, column = 18).value = link_node.site_2_id
+    ws.cell(row = index, column = 19).value =  link_node.site_1_id
+    ws.cell(row = index, column = 17).value = "_".join([link_node.site_2_id, link_node.site_1_id])
+    ws.cell(row = index, column = 20).value = link_node.link_distance
+    ws.cell(row = index, column = 21).value = link_node.frequency_band
+    ws.cell(row = index, column = 22).value = link_node.protection
+    ws.cell(row = index, column = 23).value = link_node.planned_capacity
+    ws.cell(row = index, column = 24).value = link_node.antenna_diameter
+    ws.cell(row = index, column = 25).value = link_node.site_2_antenna_height
+    ws.cell(row = index, column = 26).value = link_node.site_1_antenna_height
+    ws.cell(row = index, column = 29).value = link_node.link_availability
 
 def find_node_with_name(link_graph, site_1_id, site_2_id):
     for node in link_graph[site_1_id]:
@@ -155,6 +140,7 @@ def find_node_with_name(link_graph, site_1_id, site_2_id):
 
 
 if __name__ == '__main__':
+    """
     graph = {'A': ['B', 'C'],
              'B': ['D', 'E', 'F'],
              'C': ['H'],
@@ -174,6 +160,7 @@ if __name__ == '__main__':
             error_flag = True
             print("%s belongs to %s, but the correct belonging should be %s.".format(key, sites_dict[key], test_dict[key]))
     print("test finished, result:", not error_flag)
+    """
     generate_link_information()
     print('finished')
     
