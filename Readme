@@ -1,0 +1,8 @@
+Generate customized table according to design result.
+Usage:
+1. Finish link design
+2. Output site information and link information table
+3. Copy the two tables in step 2 into path "testdoc", the file name should be "Site Information.xlsx" and "Link information.xlsx" respectively.
+4. Delete the first row in "Link Information.xlsx". This row has merged cells and openpyxl will handle the int value as float value if we left it in the table.
+5. Copy the customized template into path "testdoc", the file name should be "City.xlsx".
+6. Run "python ProcessData.py", the program will analyze topology and link parameters and fill the customized table automatically. The result will be saves as "test.xlsx".
