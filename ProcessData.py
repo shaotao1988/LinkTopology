@@ -12,8 +12,8 @@ def get_sites_dict():
     row_count = ws.max_row
     sites_dict = {}
     for index in range(2, row_count+1):
-        site_id = ws.cell(row = index, column = 1).value
-        belong_to = ws.cell(row = index, column = 11).value
+        site_id = str(ws.cell(row = index, column = 1).value)
+        belong_to = str(ws.cell(row = index, column = 11).value)
         sites_dict[site_id] = belong_to
     return sites_dict
 
@@ -71,8 +71,8 @@ def generate_topology():
     link_graph = {}
     for index in range(2, row_count+1):
         link_node = LinkNode()
-        link_node.site_1_id = ws_link.cell(row = index, column = 3).value
-        link_node.site_2_id = ws_link.cell(row = index, column = 4).value
+        link_node.site_1_id = str(ws_link.cell(row = index, column = 3).value)
+        link_node.site_2_id = str(ws_link.cell(row = index, column = 4).value)
         link_node.link_distance = ws_link.cell(row = index, column = 11).value
         link_node.frequency_band = ws_link.cell(row = index, column = 12).value
         protection = ws_link.cell(row = index, column = 13).value
@@ -104,14 +104,14 @@ def generate_link_information():
     link_graph = generate_topology()
     for index in range(4, row_count+1):
         site_type = ws.cell(row = index, column = 1).value
-        site_id = ws.cell(row = index, column = 2).value
+        site_id = str(ws.cell(row = index, column = 2).value)
         if site_type == "SRAN" and site_id in sites_dict:
             fill_one_row(ws, index, sites_dict[site_id], link_graph)
     wb.save('testdoc/test.xlsx')
 
 
 def fill_one_row(ws, index, belong_to, link_graph):
-    site_id = ws.cell(row = index, column = 2).value
+    site_id = str(ws.cell(row = index, column = 2).value)
     path = find_path_with_connection(link_graph, site_id, belong_to)
     if path == None or len(path)<2:
         return
@@ -163,5 +163,3 @@ if __name__ == '__main__':
     """
     generate_link_information()
     print('finished')
-    
-
